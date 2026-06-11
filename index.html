@@ -201,7 +201,6 @@
         }
 		/* Ці стилі спрацюють ТІЛЬКИ всередині PDF-генератора */
 @media print {
-    /* Ховаємо весь інтерфейс сайту, крім самого репорту */
     body * {
         visibility: hidden;
     }
@@ -220,14 +219,14 @@
     }
 }
 
-/* Захист від розриву карток із питаннями (працює і на 4, і на 40 питань) */
+/* Забороняємо розривати КАРТКУ навпіл, але дозволяємо їм іти разом */
 .pdf-card {
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
+    page-break-inside: avoid !important; /* Для старіших рушіїв */
+    break-inside: avoid !important;      /* Сучасний стандарт */
     display: block !important;
+    margin-bottom: 15px !important;
 }
 
-/* Переконайся, що контейнер репорту не має флексів, які стискають блоки */
 .report-container {
     display: block !important;
     width: 100% !important;
@@ -513,23 +512,22 @@ function downloadPDF() {
         return;
     }
 
-    // Налаштування для оригінального елемента
     const opt = {
         margin:       [12, 12, 12, 12],
         filename:     `ISTQB_${currentExamKey}_Report.pdf`,
         image:        { type: 'jpeg', quality: 0.98 },
         html2canvas:  {
-            scale: 2,         // Максимальна чіткість тексту
-            useCORS: true,    // Щоб не зникали картинки з GitHub
+            scale: 2,
+            useCORS: true,
             allowTaint: false,
             logging: false,
             letterRendering: true
         },
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak:    { mode: ['css', 'legacy'], before: '.pdf-card' }
+        // ЗМІНЕНО ТУТ: тепер використовується розумний внутрішній алгоритм html2pdf
+        pagebreak:    { mode: ['avoid-all', 'css'] }
     };
 
-    // Пряма генерація з оригінального блоку
     html2pdf().set(opt).from(element).save();
 }
 
