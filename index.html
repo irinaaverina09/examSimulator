@@ -486,43 +486,53 @@ function showResults() {
 }
 
 function downloadPDF() {
-    // 1. Створюємо рядок з усіма даними для репорту
+    // 1. Створюємо прихований iframe
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'absolute';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = 'none';
+    document.body.appendChild(iframe);
+
+    // 2. Готуємо контент
     const examTitle = allExams[currentExamKey].title;
     let score = 0;
     let cardsHtml = "";
 
     activeQuestions.forEach((q, index) => {
-        const userAnswer = userAnswers[index] ? userAnswers[index].toUpperCase() : "NO ANSWER";
         const isCorrect = userAnswers[index] === q.correct;
         if (isCorrect) score++;
-
         cardsHtml += `
-            <div class="pdf-card">
+            <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; page-break-inside: avoid;">
                 <p><b>Question #${q.id}</b> - ${isCorrect ? 'CORRECT' : 'INCORRECT'}</p>
-                ${q.image ? `<img src="${q.image}" style="max-width:300px;">` : ''}
-                <p>Your Answer: ${userAnswer}</p>
-                <p>Correct Answer: ${q.correct.toUpperCase()}</p>
+                ${q.image ? `<img src="${q.image}" style="max-width:200px;">` : ''}
+                <p>Your Answer: ${userAnswers[index] || 'None'}</p>
+                <p>Correct: ${q.correct}</p>
             </div>
         `;
     });
 
-    // 2. Тимчасово замінюємо вміст body на чистий репорт
-    const originalContent = document.body.innerHTML;
-    document.body.innerHTML = `
-        <div id="print-container">
-            <h1>ISTQB EXAM REPORT</h1>
-            <p>Exam: ${examTitle}</p>
-            <p>Score: ${score} / ${activeQuestions.length}</p>
-            <hr>
-            ${cardsHtml}
-        </div>
-    `;
+    // 3. Записуємо дані в iframe
+    const doc = iframe.contentWindow.document;
+    doc.open();
+    doc.write(`
+        <html>
+            <head><title>Report</title></head>
+            <body>
+                <h1>ISTQB Report: ${examTitle}</h1>
+                <p>Score: ${score} / ${activeQuestions.length}</p>
+                ${cardsHtml}
+            </body>
+        </html>
+    `);
+    doc.close();
 
-    // 3. Викликаємо друк
-    window.print();
+    // 4. Викликаємо друк з iframe
+    iframe.contentWindow.focus();
+    iframe.contentWindow.print();
 
-    // 4. Повертаємо оригінальний контент назад
-    document.body.innerHTML = originalContent;
+    // 5. Видаляємо iframe після друку (затримка для браузера)
+    setTimeout(() => { document.body.removeChild(iframe); }, 1000);
 }
 
         function exitToMenu() {
