@@ -199,6 +199,39 @@
             .options-container { grid-template-columns: repeat(2, 1fr); gap: 12px; }
             .option-btn { padding: 22px; font-size: 20px; }
         }
+		/* Ці стилі спрацюють ТІЛЬКИ всередині PDF-генератора */
+@media print {
+    /* Ховаємо весь інтерфейс сайту, крім самого репорту */
+    body * {
+        visibility: hidden;
+    }
+    #pdf-content, #pdf-content * {
+        visibility: visible;
+    }
+    #pdf-content {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+}
+
+/* Захист від розриву карток із питаннями (працює і на 4, і на 40 питань) */
+.pdf-card {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    display: block !important;
+}
+
+/* Переконайся, що контейнер репорту не має флексів, які стискають блоки */
+.report-container {
+    display: block !important;
+    width: 100% !important;
+}
     </style>
 </head>
 <body>
@@ -475,56 +508,29 @@ function showResults() {
 
 function downloadPDF() {
     const element = document.getElementById('pdf-content');
-    
-    // 1. Створюємо глибоку копію (клон) елемента, щоб не ламати верстку на екрані користувача
-    const clonedElement = element.cloneNode(true);
-    
-    // Форсуємо правильні стилі для друку на клонованому елементі, щоб уникнути зсувів через флекси сторінки
-    clonedElement.style.width = '790px'; // Ідеальна ширина під А4
-    clonedElement.style.maxWidth = '790px';
-    clonedElement.style.margin = '0';
-    clonedElement.style.padding = '10px';
-    clonedElement.style.display = 'block';
+    if (!element) {
+        alert("Error: pdf-content element not found!");
+        return;
+    }
 
-    // Тимчасово додаємо клон у body, але ховаємо його далеко за межі екрана
-    clonedElement.style.position = 'absolute';
-    clonedElement.style.left = '-9999px';
-    clonedElement.style.top = '0';
-    document.body.appendChild(clonedElement);
-
-    // Налаштування для html2pdf
+    // Налаштування для оригінального елемента
     const opt = {
-        margin:       [12, 12, 12, 12], 
+        margin:       [12, 12, 12, 12],
         filename:     `ISTQB_${currentExamKey}_Report.pdf`,
-        image:        { type: 'jpeg', quality: 0.95 },
-        html2canvas:  { 
-            scale: 1.5,        // Оптимально для 40+ питань, щоб файл не важив 100 МБ
-            useCORS: true, 
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  {
+            scale: 2,         // Максимальна чіткість тексту
+            useCORS: true,    // Щоб не зникали картинки з GitHub
             allowTaint: false,
             logging: false,
-            scrollX: 0,
-            scrollY: 0
+            letterRendering: true
         },
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        // Автоматичний розумний поділ сторінок для великої кількості питань
         pagebreak:    { mode: ['css', 'legacy'], before: '.pdf-card' }
     };
 
-    // 2. Вейтер (Затримка): Чекаємо 500мс, поки рендериться DOM та підтягнуться картинки
-    setTimeout(() => {
-        html2pdf()
-            .set(opt)
-            .from(clonedElement)
-            .save()
-            .then(() => {
-                // Після успішного завантаження видаляємо прихований клон з пам'яті
-                document.body.removeChild(clonedElement);
-            })
-            .catch((err) => {
-                console.error("PDF Generation error: ", err);
-                document.body.removeChild(clonedElement);
-            });
-    }, 500); // 500 мілісекунд затримки (можна збільшити до 800, якщо картинок дуже багато)
+    // Пряма генерація з оригінального блоку
+    html2pdf().set(opt).from(element).save();
 }
 
         function exitToMenu() {
