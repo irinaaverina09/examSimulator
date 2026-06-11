@@ -3,199 +3,478 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ISTQB Exam Simulator</title>
+    <title>ISTQB Exam Hub Simulator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
-        .quiz-container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); width: 100%; max-width: 750px; text-align: center; }
-        .header-box { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f0f2f5; padding-bottom: 15px; margin-bottom: 20px; }
-        .progress { font-size: 16px; color: #65676b; font-weight: 600; }
-        .timer { font-size: 18px; color: #dc3545; font-weight: bold; background: #ffeef0; padding: 6px 12px; border-radius: 20px; }
-        .image-wrapper { background: #fff; border: 1px solid #e4e6eb; border-radius: 8px; padding: 10px; margin-bottom: 25px; min-height: 200px; display: flex; justify-content: center; align-items: center; }
-        .question-img { max-width: 100%; height: auto; display: block; border-radius: 4px; }
-        .options-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
-        .option-btn { padding: 15px; font-size: 18px; font-weight: bold; background: #f0f2f5; border: 2px solid transparent; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; color: #050505; }
-        .option-btn:hover { background: #e4e6eb; }
-        .option-btn.selected { background: #e7f3ff; border-color: #1877f2; color: #1877f2; }
-        .controls { display: flex; justify-content: flex-end; }
-        .next-btn { padding: 12px 30px; background: #1877f2; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: 600; transition: background 0.2s; }
-        .next-btn:hover { background: #1466d2; }
-        .hidden { display: none; }
-        .result-title { color: #1c1e21; margin-bottom: 10px; }
-        .score { font-size: 48px; font-weight: bold; color: #24a0ed; margin: 20px 0; }
-        .score.pass { color: #2e7d32; }
-        .score.fail { color: #c62828; }
-        .status-text { font-size: 20px; font-weight: 600; margin-bottom: 30px; }
-        .download-btn { padding: 14px 25px; background: #2e7d32; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: 600; }
-        .download-btn:hover { background: #235e26; }
+        :root {
+            --primary-color: #0066cc;
+            --success-color: #2ebd59;
+            --error-color: #ff3b30;
+            --warning-color: #f0a900;
+            --text-color: #333;
+            --bg-color: #f4f6f9;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .quiz-container {
+            background: #fff;
+            max-width: 800px;
+            width: 100%;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            padding: 30px;
+            box-sizing: border-box;
+        }
+
+        /* Стилі для Головного Меню (Dashboard) */
+        .menu-screen h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 30px;
+        }
+        .exam-section {
+            margin-bottom: 25px;
+        }
+        .exam-section h3 {
+            border-bottom: 2px solid #e4e6eb;
+            padding-bottom: 8px;
+            color: #555;
+        }
+        .grid-menu {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        .menu-btn {
+            background-color: #fff;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 20px;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .menu-btn:hover {
+            background-color: var(--primary-color);
+            color: #fff;
+        }
+
+        /* Стилі симулятора та таймера */
+        .meta-layout {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #666;
+        }
+
+        .timer-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .timer-box {
+            color: var(--text-color);
+            background: #e4e6eb;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-variant-numeric: tabular-nums;
+        }
+        .timer-box.running {
+            background: #ffe5e5;
+            color: var(--error-color);
+        }
+
+        .control-btn {
+            padding: 6px 12px;
+            font-size: 14px;
+            font-weight: bold;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-start { background-color: var(--success-color); color: white; }
+        .btn-pause { background-color: var(--warning-color); color: white; }
+
+        /* Стан блокування інтерфейсу під час паузи */
+        .quiz-content.blur {
+            filter: blur(5px);
+            pointer-events: none;
+            user-select: none;
+        }
+
+        .image-wrapper {
+            background: #ffffff;
+            border: 1px solid #e4e6eb;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .question-img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 4px;
+        }
+
+        .options-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .option-btn {
+            background-color: #f0f2f5;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            padding: 18px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .option-btn.selected {
+            background-color: #e6f0fa;
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .nav-layout {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .next-btn {
+            background-color: var(--primary-color);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-abort { background-color: #8e8e93; }
+        .btn-secondary { background-color: #555; margin-bottom: 10px; }
+
+        .result-screen { text-align: center; }
+        .score-text { font-size: 44px; font-weight: 800; color: var(--primary-color); margin: 15px 0; }
+
+        .pdf-card {
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+            page-break-inside: avoid;
+            background-color: #fff;
+        }
+
+        @media (max-width: 576px) {
+            body { padding: 10px; }
+            .quiz-container { padding: 20px 15px; }
+            .grid-menu { grid-template-columns: 1fr; }
+            .options-container { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+            .option-btn { padding: 22px; font-size: 20px; }
+        }
     </style>
 </head>
 <body>
 
-<div class="quiz-container">
-    <div id="quiz-box">
-        <div class="header-box">
-            <div id="progress-text" class="progress">Question 1 of 40</div>
-            <div id="timer-text" class="timer">Time: 60:00</div>
-        </div>
-        
-        <div class="image-wrapper">
-            <img id="question-image" class="question-img" src="" alt="Question Image">
-        </div>
-        
-        <div class="options-container">
-            <button class="option-btn" onclick="selectOption('a')">A</button>
-            <button class="option-btn" onclick="selectOption('b') font-weight:bold;">B</button>
-            <button class="option-btn" onclick="selectOption('c')">C</button>
-            <button class="option-btn" onclick="selectOption('d')">D</button>
-        </div>
-        
-        <div class="controls">
-            <button id="next-button" class="next-btn" onclick="nextQuestion()">Next</button>
+    <div class="quiz-container" id="quiz-box">
+        <div class="menu-screen" id="menu-screen">
+            <h1>=== ISTQB EXAM HUB ===</h1>
+            
+            <div class="exam-section">
+                <h3>Official Sample Exams (v4.0)</h3>
+                <div class="grid-menu">
+                    <button class="menu-btn" onclick="startExamWithConfig('examA')">📋 Exam A (Core 4)</button>
+                    <button class="menu-btn" onclick="startExamWithConfig('examB')">📋 Exam B (Empty Template)</button>
+                    <button class="menu-btn" onclick="startExamWithConfig('examC')">📋 Exam C (Empty Template)</button>
+                    <button class="menu-btn" onclick="startExamWithConfig('examD')">📋 Exam D (Empty Template)</button>
+                </div>
+            </div>
+
+            <div class="exam-section">
+                <h3>Additional Practice</h3>
+                <div class="grid-menu">
+                    <button class="menu-btn" onclick="startExamWithConfig('extraQ')">⚡ Extra Questions Pack</button>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div id="result-box" class="hidden">
-        <h2 class="result-title">Exam Completed!</h2>
-        <div id="final-score" class="score">0 / 0</div>
-        <div id="pass-status" class="status-text"></div>
-        <button class="download-btn" onclick="downloadReport()">Download Exam Report (.txt)</button>
-    </div>
-</div>
-
-<script>
-    // --- КАРТА ВІДПОВІДЕЙ ТА КАРТИНOK ---
-    // Сюди просто пропиши назви своїх скриншотів та букви правильних відповідей!
-    const quizData = [
-        { id: 1, image: "q1.png", correct: "c" },
-        { id: 2, image: "q2.png", correct: "a" },
-        { id: 3, image: "q3.png", correct: "b" },
-        { id: 4, image: "q4.png", correct: "d" }
-        // Ти можеш легко додати сюди всі 40 питань за аналогією
-    ];
-
-    let currentIdx = 0;
-    let userAnswers = [];
-    let selectedLetter = null;
-    let timeLeft = 3600; // 60 хвилин у секундах
-    let timerTimer;
-
-    function startTimer() {
-        timerTimer = setInterval(() => {
-            if (timeLeft <= 0) {
-                clearInterval(timerTimer);
-                finishExam();
-            } else {
-                timeLeft--;
-                let mins = Math.floor(timeLeft / 60);
-                let secs = timeLeft % 60;
-                document.getElementById('timer-text').innerText = `Time: ${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    <script>
+        // БАНК ДАНИХ ДЛЯ ВСІХ ВЕРСІЙ ЕКЗАМЕНІВ
+        const allExams = {
+            examA: {
+                title: "Official Exam A",
+                questions: [
+                    { id: 1, image: "ExamA_q1.png", correct: "c" },
+                    { id: 2, image: "ExamA_q2.png", correct: "a" },
+                    { id: 3, image: "ExamA_q3.png", correct: "a" },
+                    { id: 4, image: "ExamA_q4.png", correct: "b" }
+                ]
+            },
+            examB: {
+                title: "Official Exam B",
+                questions: [
+                    { id: 1, image: "ExamB_q1.png", correct: "a" } // Шаблон для майбутніх скриншотів
+                ]
+            },
+            examC: { title: "Official Exam C", questions: [] },
+            examD: { title: "Official Exam D", questions: [] },
+            extraQ: {
+                title: "Extra Questions",
+                questions: [
+                    { id: 21, image: "ExamA_q21.png", correct: "a" },
+                    { id: 22, image: "ExamA_q22.png", correct: "c" },
+                    { id: 23, image: "ExamA_q23.png", correct: "c" }
+                ]
             }
-        }, 1000);
-    }
+        };
 
-    function renderQuestion() {
-        selectedLetter = null;
-        // Скидаємо виділення з кнопок
-        document.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('selected'));
+        let currentExamKey = "";
+        let activeQuestions = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = {};
         
-        const currentQuestion = quizData[currentIdx];
-        document.getElementById('progress-text').innerText = `Question ${currentIdx + 1} of ${quizData.length}`;
-        document.getElementById('question-image').src = currentQuestion.image;
-        
-        // Якщо це останнє питання, міняємо текст кнопки
-        if (currentIdx === quizData.length - 1) {
-            document.getElementById('next-button').innerText = "Finish Exam";
-        }
-    }
+        let timeLeft = 3600; // 60 хвилин
+        let timerInterval = null;
+        let isTimerRunning = false;
 
-    function selectOption(letter) {
-        selectedLetter = letter;
-        const buttons = document.querySelectorAll('.option-btn');
-        buttons.forEach(btn => {
-            if(btn.innerText.toLowerCase() === letter) {
-                btn.classList.add('selected');
-            } else {
-                btn.classList.remove('selected');
+        // Запуск вибраного екзамену
+        function startExamWithConfig(examKey) {
+            const exam = allExams[examKey];
+            if (!exam || !exam.questions || exam.questions.length === 0) {
+                alert("This exam repository is currently empty. Add image mappings inside allExams object!");
+                return;
             }
-        });
-    }
 
-    function nextQuestion() {
-        if (!selectedLetter) {
-            alert("Please select an answer before moving to the next question!");
-            return;
+            currentExamKey = examKey;
+            activeQuestions = exam.questions;
+            currentQuestionIndex = 0;
+            userAnswers = {};
+            timeLeft = 3600;
+            isTimerRunning = false;
+            if(timerInterval) clearInterval(timerInterval);
+
+            renderQuizLayout();
+            showQuestion();
         }
 
-        // Записуємо вибір користувача
-        userAnswers.push({
-            id: quizData[currentIdx].id,
-            userAnswer: selectedLetter,
-            correctAnswer: quizData[currentIdx].correct,
-            isCorrect: selectedLetter === quizData[currentIdx].correct
-        });
+        // Рендер робочої сітки квізу
+        function renderQuizLayout() {
+            document.getElementById("quiz-box").innerHTML = `
+                <div class="meta-layout">
+                    <span id="progress-text">Question 1 of X</span>
+                    <div class="timer-controls">
+                        <button id="timer-control-btn" class="control-btn btn-start" onclick="toggleTimer()">START TIMER</button>
+                        <span class="timer-box" id="timer">Time: 60:00</span>
+                    </div>
+                </div>
+                
+                <div id="quiz-content-wrapper" class="quiz-content blur">
+                    <div class="image-wrapper">
+                        <img id="question-image" class="question-img" src="" alt="Question Image">
+                    </div>
 
-        currentIdx++;
+                    <div class="options-container">
+                        <button class="option-btn" onclick="selectOption('a')">A</button>
+                        <button class="option-btn" onclick="selectOption('b')">B</button>
+                        <button class="option-btn" onclick="selectOption('c')">C</button>
+                        <button class="option-btn" onclick="selectOption('d')">D</button>
+                    </div>
+                </div>
 
-        if (currentIdx < quizData.length) {
-            renderQuestion();
-        } else {
-            finishExam();
+                <div class="nav-layout">
+                    <button class="next-btn btn-abort" onclick="exitToMenu()">Exit</button>
+                    <button class="next-btn" id="action-btn" onclick="handleNext()">Next</button>
+                </div>
+            `;
         }
-    }
 
-    function finishExam() {
-        clearInterval(timerTimer);
-        document.getElementById('quiz-box').classList.add('hidden');
-        document.getElementById('result-box').classList.remove('hidden');
+        // Керування станом таймера (Старт / Пауза)
+        function toggleTimer() {
+            const btn = document.getElementById("timer-control-btn");
+            const timerBox = document.getElementById("timer");
+            const wrapper = document.getElementById("quiz-content-wrapper");
 
-        // Рахуємо бали
-        let correctCount = userAnswers.filter(ans => ans.isCorrect).length;
-        let totalQuestions = quizData.length;
-        let percentage = Math.round((correctCount / totalQuestions) * 100);
-        
-        const scoreElement = document.getElementById('final-score');
-        scoreElement.innerText = `${correctCount} / ${totalQuestions}`;
-
-        const statusElement = document.getElementById('pass-status');
-        // Прохідний бал ISTQB — 65%
-        if (percentage >= 65) {
-            statusElement.innerText = `PASSED (${percentage}%) - Congratulations!`;
-            statusElement.className = "status-text pass";
-            scoreElement.className = "score pass";
-        } else {
-            statusElement.innerText = `FAILED (${percentage}%) - Required: 65%`;
-            statusElement.className = "status-text fail";
-            scoreElement.className = "score fail";
+            if (!isTimerRunning) {
+                // Запуск/Продовження
+                isTimerRunning = true;
+                wrapper.classList.remove("blur");
+                timerBox.classList.add("running");
+                btn.innerText = "PAUSE";
+                btn.className = "control-btn btn-pause";
+                
+                timerInterval = setInterval(() => {
+                    if (timeLeft <= 0) {
+                        clearInterval(timerInterval);
+                        showResults();
+                        return;
+                    }
+                    timeLeft--;
+                    const mins = Math.floor(timeLeft / 60);
+                    const secs = timeLeft % 60;
+                    timerBox.innerText = `Time: ${mins}:${secs < 10 ? '0' : ''}${secs}`;
+                }, 1000);
+            } else {
+                // Пауза
+                isTimerRunning = false;
+                wrapper.classList.add("blur");
+                timerBox.classList.remove("running");
+                btn.innerText = "RESUME";
+                btn.className = "control-btn btn-start";
+                clearInterval(timerInterval);
+            }
         }
-    }
 
-    function downloadReport() {
-        let correctCount = userAnswers.filter(ans => ans.isCorrect).length;
-        let reportText = `=== ISTQB EXAM REPORT ===\r\n`;
-        reportText += `Score: ${correctCount} out of ${quizData.length}\r\n`;
-        reportText += `Percentage: ${Math.round((correctCount / quizData.length) * 100)}%\r\n`;
-        reportText += `=========================\r\n\r\n`;
+        function showQuestion() {
+            const currentQuestion = activeQuestions[currentQuestionIndex];
+            document.getElementById("progress-text").innerText = `Question ${currentQuestionIndex + 1} of ${activeQuestions.length}`;
+            document.getElementById("question-image").src = currentQuestion.image;
 
-        userAnswers.forEach((ans, index) => {
-            let status = ans.isCorrect ? "[✓] CORRECT" : "[✗] INCORRECT";
-            reportText += `Question #${ans.id}: ${status}\r\n`;
-            reportText += `Your Answer: ${ans.userAnswer.toUpperCase()}\r\n`;
-            reportText += `Correct Answer: ${ans.correctAnswer.toUpperCase()}\r\n`;
-            reportText += `-------------------------\r\n`;
-        });
+            const buttons = document.querySelectorAll(".option-btn");
+            buttons.forEach(btn => btn.classList.remove("selected"));
 
-        // Створення та скачування файлу без сервера
-        const blob = new Blob([reportText], { type: 'text/plain;charset=utf-8' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `ISTQB_Exam_Report.txt`;
-        link.click();
-    }
+            const previousAnswer = userAnswers[currentQuestionIndex];
+            if (previousAnswer) {
+                buttons.forEach(btn => {
+                    if (btn.innerText.toLowerCase() === previousAnswer) {
+                        btn.classList.add("selected");
+                    }
+                });
+            }
 
-    // Старт симулятора
-    startTimer();
-    renderQuestion();
-</script>
+            const actionBtn = document.getElementById("action-btn");
+            actionBtn.innerText = (currentQuestionIndex === activeQuestions.length - 1) ? "Finish" : "Next";
+        }
 
+        function selectOption(letter) {
+            if(!isTimerRunning) return; // Захист від тапання під час паузи
+            userAnswers[currentQuestionIndex] = letter;
+            const buttons = document.querySelectorAll(".option-btn");
+            buttons.forEach(btn => {
+                if (btn.innerText.toLowerCase() === letter) {
+                    btn.classList.add("selected");
+                } else {
+                    btn.classList.remove("selected");
+                }
+            });
+        }
+
+        function handleNext() {
+            if(!isTimerRunning) {
+                alert("Start or Resume the timer to unlock the exam questions!");
+                return;
+            }
+            if (!userAnswers[currentQuestionIndex]) {
+                alert("Please select an option before moving next!");
+                return;
+            }
+
+            if (currentQuestionIndex < activeQuestions.length - 1) {
+                currentQuestionIndex++;
+                showQuestion();
+            } else {
+                clearInterval(timerInterval);
+                showResults();
+            }
+        }
+
+        function showResults() {
+            let score = 0;
+            let reportHtml = "";
+
+            activeQuestions.forEach((q, index) => {
+                const userAnswer = userAnswers[index] ? userAnswers[index].toUpperCase() : "NO ANSWER";
+                const correctAnswer = q.correct.toUpperCase();
+                const isCorrect = userAnswers[index] === q.correct;
+
+                if (isCorrect) score++;
+
+                reportHtml += `
+                    <div class="pdf-card" style="background-color: ${isCorrect ? '#f6fff8' : '#fff5f5'}; border-color: ${isCorrect ? '#2ebd59' : '#ff3b30'}">
+                        <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 10px;">
+                            <span>Question #${q.id}</span>
+                            <span style="color: ${isCorrect ? '#2ebd59' : '#ff3b30'}">${isCorrect ? '[✓] CORRECT' : '[✗] INCORRECT'}</span>
+                        </div>
+                        <div style="background: #fff; border: 1px solid #e4e6eb; padding: 5px; border-radius: 6px; margin-bottom: 10px; text-align: center;">
+                            <img src="${q.image}" style="max-width: 100%; max-height: 160px; height: auto; border-radius: 4px;">
+                        </div>
+                        <div style="font-size: 15px;">
+                            <p style="margin: 4px 0;"><b>Your Answer:</b> <span style="color: ${isCorrect ? '#2ebd59' : '#ff3b30'}">${userAnswer}</span></p>
+                            <p style="margin: 4px 0;"><b>Correct Answer:</b> <span style="color: #2ebd59">${correctAnswer}</span></p>
+                        </div>
+                    </div>
+                `;
+            });
+
+            const percent = Math.round((score / activeQuestions.length) * 100);
+            const isPassed = percent >= 65;
+            const examTitle = allExams[currentExamKey].title;
+
+            document.getElementById("quiz-box").innerHTML = `
+                <div class="result-screen">
+                    <div id="pdf-content" style="padding: 10px;">
+                        <h2>=== ISTQB EXAM REPORT ===</h2>
+                        <p style="font-size: 16px; color: #555; margin-top: -10px;">Exam Version: <b>${examTitle}</b></p>
+                        <div class="score-text">Score: ${score} out of ${activeQuestions.length}</div>
+                        <p style="font-size: 18px; font-weight: bold; color: ${isPassed ? 'var(--success-color)' : 'var(--error-color)'}">
+                            Percentage: ${percent}% — ${isPassed ? 'PASSED' : 'FAILED'}
+                        </p>
+                        <hr style="border: 0; border-top: 2px dashed #ccc; margin: 20px 0;">
+                        <div class="report-container">
+                            ${reportHtml}
+                        </div>
+                    </div>
+
+                    <button class="next-btn btn-secondary" style="width: 100%; margin-top: 15px;" onclick="downloadPDF()">📥 Download PDF Report</button>
+                    <button class="next-btn" style="width: 100%;" onclick="exitToMenu()">Back to Menu</button>
+                </div>
+            `;
+        }
+
+        function downloadPDF() {
+            const element = document.getElementById('pdf-content');
+            const examTitle = allExams[currentExamKey].title.replace(/\s+/g, '_');
+            const options = {
+                margin:       10,
+                filename:     `ISTQB_${examTitle}_Report.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            html2pdf().set(options).from(element).save();
+        }
+
+        function exitToMenu() {
+            if(timerInterval) clearInterval(timerInterval);
+            location.reload(); // Найпростіший спосіб повністю скинути стейт додатка
+        }
+    </script>
 </body>
 </html>
