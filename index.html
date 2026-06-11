@@ -241,7 +241,7 @@
             examB: {
                 title: "Official Exam B",
                 questions: [
-                    { id: 1, image: "ExamB_q1.png", correct: "a" } // Шаблон для майбутніх скриншотів
+                    { id: 1, image: "ExamB_q1.png", correct: "a" } 
                 ]
             },
             examC: { title: "Official Exam C", questions: [] },
@@ -323,7 +323,6 @@
             const wrapper = document.getElementById("quiz-content-wrapper");
 
             if (!isTimerRunning) {
-                // Запуск/Продовження
                 isTimerRunning = true;
                 wrapper.classList.remove("blur");
                 timerBox.classList.add("running");
@@ -342,7 +341,6 @@
                     timerBox.innerText = `Time: ${mins}:${secs < 10 ? '0' : ''}${secs}`;
                 }, 1000);
             } else {
-                // Пауза
                 isTimerRunning = false;
                 wrapper.classList.add("blur");
                 timerBox.classList.remove("running");
@@ -374,7 +372,7 @@
         }
 
         function selectOption(letter) {
-            if(!isTimerRunning) return; // Захист від тапання під час паузи
+            if(!isTimerRunning) return; 
             userAnswers[currentQuestionIndex] = letter;
             const buttons = document.querySelectorAll(".option-btn");
             buttons.forEach(btn => {
@@ -405,96 +403,58 @@
             }
         }
 
-function showResults() {
-    let score = 0;
-    let reportHtml = "";
+        function showResults() {
+            let score = 0;
+            let reportHtml = "";
 
-    activeQuestions.forEach((q, index) => {
-        const userAnswer = userAnswers[index] ? userAnswers[index].toUpperCase() : "NO ANSWER";
-        const correctAnswer = q.correct.toUpperCase();
-        const isCorrect = userAnswers[index] === q.correct;
+            activeQuestions.forEach((q, index) => {
+                const userAnswer = userAnswers[index] ? userAnswers[index].toUpperCase() : "NO ANSWER";
+                const correctAnswer = q.correct.toUpperCase();
+                const isCorrect = userAnswers[index] === q.correct;
 
-        if (isCorrect) score++;
+                if (isCorrect) score++;
 
-        // Застосовуємо жорсткі стилі уникнення розривів (page-break-inside: avoid) для кожної картки
-        reportHtml += `
-            <div class="pdf-card" style="background-color: ${isCorrect ? '#f6fff8' : '#fff5f5'}; 
-                        border: 2px solid ${isCorrect ? '#2ebd59' : '#ff3b30'};
-                        border-radius: 8px; padding: 15px; margin-bottom: 20px;
-                        page-break-inside: avoid; break-inside: avoid; display: block;">
-                <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 10px; font-family: Arial, sans-serif;">
-                    <span>Question #${q.id}</span>
-                    <span style="color: ${isCorrect ? '#2ebd59' : '#ff3b30'}">${isCorrect ? '[✓] CORRECT' : '[✗] INCORRECT'}</span>
-                </div>
-                <div style="background: #fff; border: 1px solid #e4e6eb; padding: 8px; border-radius: 6px; margin-bottom: 10px; text-align: center;">
-                    <img src="${q.image}" style="max-width: 100%; max-height: 140px; height: auto; border-radius: 4px; display: inline-block;">
-                </div>
-                <div style="font-size: 15px; font-family: Arial, sans-serif;">
-                    <p style="margin: 4px 0;"><b>Your Answer:</b> <span style="color: ${isCorrect ? '#2ebd59' : '#ff3b30'}; font-weight: bold;">${userAnswer}</span></p>
-                    <p style="margin: 4px 0;"><b>Correct Answer:</b> <span style="color: #2ebd59; font-weight: bold;">${correctAnswer}</span></p>
-                </div>
-            </div>
-        `;
-    });
+                reportHtml += `
+                    <div class="pdf-card" style="background-color: ${isCorrect ? '#f6fff8' : '#fff5f5'}; 
+                                border: 2px solid ${isCorrect ? '#2ebd59' : '#ff3b30'};
+                                border-radius: 8px; padding: 15px; margin-bottom: 20px;
+                                page-break-inside: avoid; break-inside: avoid; display: block;">
+                        <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 10px; font-family: Arial, sans-serif;">
+                            <span>Question #${q.id}</span>
+                            <span style="color: ${isCorrect ? '#2ebd59' : '#ff3b30'}">${isCorrect ? '[✓] CORRECT' : '[✗] INCORRECT'}</span>
+                        </div>
+                        <div style="background: #fff; border: 1px solid #e4e6eb; padding: 8px; border-radius: 6px; margin-bottom: 10px; text-align: center;">
+                            <img src="${q.image}" style="max-width: 100%; max-height: 140px; height: auto; border-radius: 4px; display: inline-block;">
+                        </div>
+                        <div style="font-size: 15px; font-family: Arial, sans-serif;">
+                            <p style="margin: 4px 0;"><b>Your Answer:</b> <span style="color: ${isCorrect ? '#2ebd59' : '#ff3b30'}; font-weight: bold;">${userAnswer}</span></p>
+                            <p style="margin: 4px 0;"><b>Correct Answer:</b> <span style="color: #2ebd59; font-weight: bold;">${correctAnswer}</span></p>
+                        </div>
+                    </div>
+                `;
+            });
 
-    const percent = Math.round((score / activeQuestions.length) * 100);
-    const isPassed = percent >= 65;
-    const examTitle = allExams[currentExamKey].title;
+            const percent = Math.round((score / activeQuestions.length) * 100);
+            const isPassed = percent >= 65;
+            const examTitle = allExams[currentExamKey].title;
 
-    document.getElementById("quiz-box").innerHTML = `
-        <div class="result-screen">
-            <div id="pdf-content" style="padding: 15px; background: #fff; text-align: left;">
-                <div style="page-break-inside: avoid; break-inside: avoid; text-align: center; margin-bottom: 20px;">
-                    <h2 style="font-family: Arial, sans-serif; color: #0066cc; margin-bottom: 5px;">=== ISTQB EXAM REPORT ===</h2>
-                    <p style="font-size: 16px; color: #555; margin-top: 0; font-family: Arial, sans-serif;">Exam Version: <b>${examTitle}</b></p>
-                    <div style="font-size: 38px; font-weight: 800; color: #0066cc; margin: 10px 0;">Score: ${score} out of ${activeQuestions.length}</div>
-                    <p style="font-size: 20px; font-weight: bold; margin-top: 0; font-family: Arial, sans-serif; color: ${isPassed ? '#2ebd59' : '#ff3b30'}">
-                        Percentage: ${percent}% — ${isPassed ? 'PASSED 🎉' : 'FAILED ❌'}
-                    </p>
-                </div>
-                
-                <hr style="border: 0; border-top: 2px dashed #ccc; margin: 20px 0;">
-                
-                <div class="report-container">
-                    ${reportHtml}
-                </div>
-            </div>
+            document.getElementById("quiz-box").innerHTML = `
+                <div class="result-screen">
+                    <div id="pdf-content" style="padding: 15px; background: #fff; text-align: left;">
+                        <div style="page-break-inside: avoid; break-inside: avoid; text-align: center; margin-bottom: 20px;">
+                            <h2 style="font-family: Arial, sans-serif; color: #0066cc; margin-bottom: 5px;">=== ISTQB EXAM REPORT ===</h2>
+                            <p style="font-size: 16px; color: #555; margin-top: 0; font-family: Arial, sans-serif;">Exam Version: <b>${examTitle}</b></p>
+                            <div style="font-size: 38px; font-weight: 800; color: #0066cc; margin: 10px 0;">Score: ${score} out of ${activeQuestions.length}</div>
+                            <p style="font-size: 20px; font-weight: bold; margin-top: 0; font-family: Arial, sans-serif; color: ${isPassed ? '#2ebd59' : '#ff3b30'}">
+                                Percentage: ${percent}% — ${isPassed ? 'PASSED 🎉' : 'FAILED ❌'}
+                            </p>
+                        </div>
+                        
+                        <hr style="border: 0; border-top: 2px dashed #ccc; margin: 20px 0;">
+                        
+                        <div class="report-container">
+                            ${reportHtml}
+                        </div>
+                    </div>
 
-            <button class="next-btn btn-secondary" style="width: 100%; margin-top: 15px;" onclick="downloadPDF()">📥 Download PDF Report</button>
-            <button class="next-btn" style="width: 100%;" onclick="exitToMenu()">Back to Menu</button>
-        </div>
-    `;
-}
-
-// Покращена функція генерації PDF з оптимізацією сторінок
-function downloadPDF() {
-    const element = document.getElementById('pdf-content');
-    const examTitle = allExams[currentExamKey].title.replace(/\s+/g, '_');
-    
-    // Перед генерацією переконуємося, що всі картинки всередині звіту мають атрибут крос-домену
-    const images = element.getElementsByTagName('img');
-    for (let img of images) {
-        img.setAttribute('crossorigin', 'anonymous');
-    }
-
-    const options = {
-        margin:       [12, 12, 12, 12], // Акуратні відступи від країв А4 (зверху, знизу, зліва, справа)
-        filename:     `ISTQB_${examTitle}_Report.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { 
-            scale: 2, 
-            useCORS: true, 
-            logging: false,
-            letterRendering: true
-        },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        // Спеціальний розумний режим розриву сторінок для html2pdf
-        pagebreak:    { mode: ['css', 'legacy'] } 
-    };
-
-    html2pdf().set(options).from(element).save();
-}
-		
-    </script>
-</body>
-</html>
+                    <button class="next-btn btn-secondary" style="width: 100%; margin-top: 15px;"
