@@ -211,7 +211,7 @@
                 <h3>Official Sample Exams (v4.0)</h3>
                 <div class="grid-menu">
                     <button class="menu-btn" onclick="startExamWithConfig('examA')">📋 Exam A (Core 4)</button>
-                    <button class="menu-btn" onclick="startExamWithConfig('examB')">📋 Exam B (Empty Template)</button>
+                    <button class="menu-btn" onclick="startExamWithConfig('examB')">📋 Exam B (Template)</button>
                     <button class="menu-btn" onclick="startExamWithConfig('examC')">📋 Exam C (Empty Template)</button>
                     <button class="menu-btn" onclick="startExamWithConfig('examD')">📋 Exam D (Empty Template)</button>
                 </div>
@@ -255,6 +255,11 @@
                 ]
             }
         };
+
+        let initialMenuHtml = "";
+        window.addEventListener("DOMContentLoaded", () => {
+            initialMenuHtml = document.getElementById("quiz-box").innerHTML;
+        });
 
         let currentExamKey = "";
         let activeQuestions = [];
@@ -457,4 +462,28 @@
                         </div>
                     </div>
 
-                    <button class="next-btn btn-secondary" style="width: 100%; margin-top: 15px;"
+                    <button class="next-btn btn-secondary" style="width: 100%; margin-top: 15px;" onclick="downloadPDF()">Download PDF Report</button>
+                    <button class="next-btn" style="width: 100%;" onclick="exitToMenu()">Back to Menu</button>
+                </div>
+            `;
+        }
+
+        function downloadPDF() {
+            const element = document.getElementById('pdf-content');
+            const opt = {
+                margin:       10,
+                filename:     `ISTQB_${currentExamKey}_Report.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            html2pdf().set(opt).from(element).save();
+        }
+
+        function exitToMenu() {
+            if(timerInterval) clearInterval(timerInterval);
+            document.getElementById("quiz-box").innerHTML = initialMenuHtml;
+        }
+    </script>
+</body>
+</html>
