@@ -38,6 +38,7 @@
             box-sizing: border-box;
         }
 
+        /* Стилі для Головного Меню (Dashboard) */
         .menu-screen h1 {
             text-align: center;
             color: var(--primary-color);
@@ -72,6 +73,7 @@
             color: #fff;
         }
 
+        /* Стилі симулятора та таймера */
         .meta-layout {
             display: flex;
             justify-content: space-between;
@@ -111,6 +113,7 @@
         .btn-start { background-color: var(--success-color); color: white; }
         .btn-pause { background-color: var(--warning-color); color: white; }
 
+        /* Стан блокування інтерфейсу під час паузи */
         .quiz-content.blur {
             filter: blur(5px);
             pointer-events: none;
@@ -178,6 +181,8 @@
         .btn-secondary { background-color: #555; margin-bottom: 10px; }
 
         .result-screen { text-align: center; }
+        .score-text { font-size: 44px; font-weight: 800; color: var(--primary-color); margin: 15px 0; }
+
         .pdf-card {
             border: 1px solid #ccc;
             border-radius: 6px;
@@ -186,6 +191,26 @@
             page-break-inside: avoid;
             background-color: #fff;
         }
+
+        @media (max-width: 576px) {
+            body { padding: 10px; }
+            .quiz-container { padding: 20px 15px; }
+            .grid-menu { grid-template-columns: 1fr; }
+            .options-container { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+            .option-btn { padding: 22px; font-size: 20px; }
+        }
+		
+		@media print {
+    body > *:not(#print-container) { display: none !important; }
+    #print-container { display: block !important; padding: 20px; }
+    .pdf-card { 
+        page-break-inside: avoid !important; 
+        border: 1px solid #ccc; 
+        padding: 10px; 
+        margin-bottom: 10px; 
+    }
+}
+
     </style>
 </head>
 <body>
@@ -195,12 +220,12 @@
             <h1>=== ISTQB EXAM HUB ===</h1>
             
             <div class="exam-section">
-                <h3>Official Sample Exams</h3>
+                <h3>Official Sample Exams (v4.0)</h3>
                 <div class="grid-menu">
-                    <button class="menu-btn" onclick="startExamWithConfig('examA')">📋 Exam A Foundation Level v4.0</button>
-                    <button class="menu-btn" onclick="startExamWithConfig('examB')">📋 Exam B Foundation Level v4.0 (Empty Template)</button>
-                    <button class="menu-btn" onclick="startExamWithConfig('examC')">📋 Exam C Foundation Level v4.0 (Empty Template)</button>
-                    <button class="menu-btn" onclick="startExamWithConfig('examD')">📋 Exam D Foundation Level v4.0 (Empty Template)</button>
+                    <button class="menu-btn" onclick="startExamWithConfig('examA')">📋 Exam A (Core 4)</button>
+                    <button class="menu-btn" onclick="startExamWithConfig('examB')">📋 Exam B (Template)</button>
+                    <button class="menu-btn" onclick="startExamWithConfig('examC')">📋 Exam C (Empty Template)</button>
+                    <button class="menu-btn" onclick="startExamWithConfig('examD')">📋 Exam D (Empty Template)</button>
                 </div>
             </div>
 
@@ -213,8 +238,9 @@
         </div>
     </div>
 
-    <script>
-        const allExams = {
+<script>
+
+const allExams = {
             examA: {
                 title: "Official Exam A",
                 questions: [
@@ -313,93 +339,338 @@ questions: [
 ]
             }
         };
-        let initialMenuHtml = "";
-        window.addEventListener("DOMContentLoaded", () => { initialMenuHtml = document.getElementById("quiz-box").innerHTML; });
 
-        let currentExamKey = "", activeQuestions = [], currentQuestionIndex = 0, userAnswers = {}, timeLeft = 3600, timerInterval = null, isTimerRunning = false;
+let initialMenuHtml = "";
+window.addEventListener("DOMContentLoaded", () => {
+    initialMenuHtml = document.getElementById("quiz-box").innerHTML;
+});
 
-        function startExamWithConfig(examKey) {
-            currentExamKey = examKey;
-            activeQuestions = allExams[examKey].questions;
-            currentQuestionIndex = 0;
-            userAnswers = {};
-            timeLeft = 3600;
-            isTimerRunning = false;
-            renderQuizLayout();
-            showQuestion();
+let currentExamKey = "";
+let activeQuestions = [];
+let currentQuestionIndex = 0;
+let userAnswers = {};
+
+let timeLeft = 3600;
+let timerInterval = null;
+let isTimerRunning = false;
+
+/* ------------------------- START EXAM ------------------------- */
+
+function startExamWithConfig(examKey) {
+    const exam = allExams[examKey];
+    if (!exam || !exam.questions || exam.questions.length === 0) {
+        alert("This exam repository is currently empty.");
+        return;
+    }
+
+    currentExamKey = examKey;
+    activeQuestions = exam.questions;
+    currentQuestionIndex = 0;
+    userAnswers = {};
+    timeLeft = 3600;
+    isTimerRunning = false;
+    if (timerInterval) clearInterval(timerInterval);
+
+    renderQuizLayout();
+    showQuestion();
+}
+
+/* ------------------------- RENDER LAYOUT ------------------------- */
+
+function renderQuizLayout() {
+    document.getElementById("quiz-box").innerHTML = `
+        <div class="meta-layout">
+            <span id="progress-text">Question 1 of X</span>
+            <div class="timer-controls">
+                <button id="timer-control-btn" class="control-btn btn-start" onclick="toggleTimer()">START TIMER</button>
+                <span class="timer-box" id="timer">Time: 60:00</span>
+            </div>
+        </div>
+        
+        <div id="quiz-content-wrapper" class="quiz-content blur">
+            <div class="image-wrapper">
+                <img id="question-image" class="question-img" src="" alt="Question Image">
+            </div>
+
+            <div class="options-container">
+                <button class="option-btn" onclick="selectOption('a')">A</button>
+                <button class="option-btn" onclick="selectOption('b')">B</button>
+                <button class="option-btn" onclick="selectOption('c')">C</button>
+                <button class="option-btn" onclick="selectOption('d')">D</button>
+            </div>
+        </div>
+
+        <div class="nav-layout">
+            <button class="next-btn btn-abort" onclick="exitToMenu()">Exit</button>
+            <button class="next-btn" id="action-btn" onclick="handleNext()">Next</button>
+        </div>
+    `;
+}
+
+/* ------------------------- TIMER ------------------------- */
+
+function toggleTimer() {
+    const btn = document.getElementById("timer-control-btn");
+    const timerBox = document.getElementById("timer");
+    const wrapper = document.getElementById("quiz-content-wrapper");
+
+    if (!isTimerRunning) {
+        isTimerRunning = true;
+        wrapper.classList.remove("blur");
+        timerBox.classList.add("running");
+        btn.innerText = "PAUSE";
+        btn.className = "control-btn btn-pause";
+        
+        timerInterval = setInterval(() => {
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                showResults();
+                return;
+            }
+            timeLeft--;
+            const mins = Math.floor(timeLeft / 60);
+            const secs = timeLeft % 60;
+            timerBox.innerText = `Time: ${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        }, 1000);
+    } else {
+        isTimerRunning = false;
+        wrapper.classList.add("blur");
+        timerBox.classList.remove("running");
+        btn.innerText = "RESUME";
+        btn.className = "control-btn btn-start";
+        clearInterval(timerInterval);
+    }
+}
+
+/* ------------------------- SHOW QUESTION ------------------------- */
+
+function showQuestion() {
+    const q = activeQuestions[currentQuestionIndex];
+    document.getElementById("progress-text").innerText =
+        `Question ${currentQuestionIndex + 1} of ${activeQuestions.length}`;
+    document.getElementById("question-image").src = q.image;
+
+    const buttons = document.querySelectorAll(".option-btn");
+    buttons.forEach(btn => btn.classList.remove("selected"));
+
+    const prev = userAnswers[currentQuestionIndex];
+
+    if (Array.isArray(prev)) {
+        buttons.forEach(btn => {
+            const letter = btn.innerText.toLowerCase();
+            btn.classList.toggle("selected", prev.includes(letter));
+        });
+    } else if (typeof prev === "string") {
+        buttons.forEach(btn => {
+            const letter = btn.innerText.toLowerCase();
+            btn.classList.toggle("selected", prev === letter);
+        });
+    }
+
+    document.getElementById("action-btn").innerText =
+        currentQuestionIndex === activeQuestions.length - 1 ? "Finish" : "Next";
+}
+
+/* ------------------------- MULTI-SELECT FIX ------------------------- */
+
+function selectOption(letter) {
+    if (!isTimerRunning) return;
+
+    if (!Array.isArray(userAnswers[currentQuestionIndex])) {
+        if (typeof userAnswers[currentQuestionIndex] === "string") {
+            userAnswers[currentQuestionIndex] = [userAnswers[currentQuestionIndex]];
+        } else {
+            userAnswers[currentQuestionIndex] = [];
         }
+    }
 
-        function renderQuizLayout() {
-            document.getElementById("quiz-box").innerHTML = `
-                <div class="meta-layout">
-                    <span id="progress-text"></span>
-                    <div class="timer-controls">
-                        <button id="timer-control-btn" class="control-btn btn-start" onclick="toggleTimer()">START TIMER</button>
-                        <span class="timer-box" id="timer">Time: 60:00</span>
-                    </div>
+    const arr = userAnswers[currentQuestionIndex];
+
+    if (arr.includes(letter)) {
+        userAnswers[currentQuestionIndex] = arr.filter(x => x !== letter);
+    } else {
+        arr.push(letter);
+    }
+
+    const buttons = document.querySelectorAll(".option-btn");
+    buttons.forEach(btn => {
+        const l = btn.innerText.toLowerCase();
+        btn.classList.toggle("selected", arr.includes(l));
+    });
+}
+
+/* ------------------------- NEXT ------------------------- */
+
+function handleNext() {
+    if (!isTimerRunning) {
+        alert("Start or Resume the timer to unlock the exam questions!");
+        return;
+    }
+
+    const ans = userAnswers[currentQuestionIndex];
+    if (!ans || (Array.isArray(ans) && ans.length === 0)) {
+        alert("Please select an option before moving next!");
+        return;
+    }
+
+    if (currentQuestionIndex < activeQuestions.length - 1) {
+        currentQuestionIndex++;
+        showQuestion();
+    } else {
+        clearInterval(timerInterval);
+        showResults();
+    }
+}
+
+/* ------------------------- RESULTS ------------------------- */
+
+function showResults() {
+    let score = 0;
+    let reportHtml = "";
+
+    activeQuestions.forEach((q, index) => {
+
+        const correctArray = q.correct.split(",").map(x => x.trim().toLowerCase());
+        let userArray = userAnswers[index];
+
+        if (!Array.isArray(userArray)) {
+            userArray = userArray ? [userArray] : [];
+        }
+        userArray = userArray.map(x => x.toLowerCase());
+
+        const isCorrect =
+            userArray.length === correctArray.length &&
+            userArray.every(x => correctArray.includes(x));
+
+        if (isCorrect) score++;
+
+        const userAnswerText =
+            userArray.length > 0 ? userArray.map(x => x.toUpperCase()).join(", ") : "NO ANSWER";
+
+        const correctAnswerText = q.correct.toUpperCase();
+
+        const imageBlock = q.image ? `
+            <div style="background:#fff;border:1px solid #e4e6eb;padding:8px;border-radius:6px;margin-bottom:10px;text-align:center;">
+                <img src="${q.image}" style="max-width:100%;max-height:140px;border-radius:4px;">
+            </div>` : "";
+
+        reportHtml += `
+            <div class="pdf-card" style="background:${isCorrect ? '#f6fff8' : '#fff5f5'};
+                 border:2px solid ${isCorrect ? '#2ebd59' : '#ff3b30'};">
+                <div style="display:flex;justify-content:space-between;font-weight:bold;margin-bottom:10px;">
+                    <span>Question #${q.id}</span>
+                    <span style="color:${isCorrect ? '#2ebd59' : '#ff3b30'}">
+                        ${isCorrect ? '[✓] CORRECT' : '[✗] INCORRECT'}
+                    </span>
                 </div>
-                <div id="quiz-content-wrapper" class="quiz-content blur">
-                    <div class="image-wrapper"><img id="question-image" class="question-img" src="" alt="Q"></div>
-                    <div class="options-container">
-                        <button class="option-btn" onclick="selectOption('a')">A</button>
-                        <button class="option-btn" onclick="selectOption('b')">B</button>
-                        <button class="option-btn" onclick="selectOption('c')">C</button>
-                        <button class="option-btn" onclick="selectOption('d')">D</button>
-                        <button class="option-btn" onclick="selectOption('e')">E</button>
-                    </div>
+                ${imageBlock}
+                <p><b>Your Answer:</b> ${userAnswerText}</p>
+                <p><b>Correct Answer:</b> ${correctAnswerText}</p>
+            </div>
+        `;
+    });
+
+    const percent = Math.round((score / activeQuestions.length) * 100);
+    const isPassed = percent >= 65;
+    const examTitle = allExams[currentExamKey].title;
+
+    document.getElementById("quiz-box").innerHTML = `
+        <div class="result-screen">
+            <div id="pdf-content" style="padding:20px;background:#fff;text-align:left;max-width:750px;margin:0 auto;">
+                <h2 style="text-align:center;color:#0066cc;">=== ISTQB EXAM REPORT ===</h2>
+                <p style="text-align:center;">Exam Version: <b>${examTitle}</b></p>
+                <div style="text-align:center;font-size:38px;font-weight:800;color:#0066cc;">
+                    Score: ${score} out of ${activeQuestions.length}
                 </div>
-                <div class="nav-layout">
-                    <button class="next-btn btn-abort" onclick="exitToMenu()">Exit</button>
-                    <button class="next-btn" id="action-btn" onclick="handleNext()">Next</button>
-                </div>
-            `;
-        }
+                <p style="text-align:center;font-size:20px;font-weight:bold;color:${isPassed ? '#2ebd59' : '#ff3b30'}">
+                    Percentage: ${percent}% — ${isPassed ? 'PASSED 🎉' : 'FAILED ❌'}
+                </p>
 
-        function toggleTimer() { /* ... логіка без змін ... */ }
+                <hr style="border-top:2px dashed #ccc;margin:20px 0;">
 
-        function showQuestion() {
-            const q = activeQuestions[currentQuestionIndex];
-            document.getElementById("progress-text").innerText = `Question ${currentQuestionIndex + 1} of ${activeQuestions.length}`;
-            document.getElementById("question-image").src = q.image;
-            
-            const currentSelected = userAnswers[currentQuestionIndex] || [];
-            document.querySelectorAll(".option-btn").forEach(btn => {
-                btn.classList.toggle("selected", currentSelected.includes(btn.innerText.toLowerCase()));
-            });
-            document.getElementById("action-btn").innerText = (currentQuestionIndex === activeQuestions.length - 1) ? "Finish" : "Next";
-        }
+                ${reportHtml}
+            </div>
 
-        function selectOption(letter) {
-            if(!isTimerRunning) return;
-            if (!userAnswers[currentQuestionIndex]) userAnswers[currentQuestionIndex] = [];
-            const arr = userAnswers[currentQuestionIndex];
-            const idx = arr.indexOf(letter);
-            idx > -1 ? arr.splice(idx, 1) : arr.push(letter);
-            showQuestion();
-        }
+            <button class="next-btn btn-secondary" style="width:100%;" onclick="downloadPDF()">Download PDF Report</button>
+            <button class="next-btn" style="width:100%;" onclick="exitToMenu()">Back to Menu</button>
+        </div>
+    `;
+}
 
-        function handleNext() {
-            if (!userAnswers[currentQuestionIndex] || userAnswers[currentQuestionIndex].length === 0) { alert("Select at least one!"); return; }
-            if (currentQuestionIndex < activeQuestions.length - 1) { currentQuestionIndex++; showQuestion(); }
-            else { clearInterval(timerInterval); showResults(); }
-        }
+/* ------------------------- PDF (MULTI-SELECT FIX) ------------------------- */
 
-        function showResults() {
-            let score = 0;
-            let reportHtml = "";
-            activeQuestions.forEach((q, index) => {
-                const uArr = (userAnswers[index] || []).sort();
-                const cArr = q.correct.replace(/\s/g, '').split(',').sort();
-                const isCorrect = JSON.stringify(uArr) === JSON.stringify(cArr);
-                if (isCorrect) score++;
-                reportHtml += `<div class="pdf-card" style="border: 2px solid ${isCorrect ? '#2ebd59' : '#ff3b30'}">
-                    <p><b>Q${q.id}</b>: ${isCorrect ? 'Correct' : 'Incorrect'}</p>
-                    <p>Your: ${uArr.join(', ').toUpperCase()} | Correct: ${cArr.join(', ').toUpperCase()}</p>
-                </div>`;
-            });
-            document.getElementById("quiz-box").innerHTML = `<h2>Score: ${score}/${activeQuestions.length}</h2>` + reportHtml + `<button onclick="location.reload()">Menu</button>`;
+function downloadPDF() {
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'absolute';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = 'none';
+    document.body.appendChild(iframe);
+
+    const examTitle = allExams[currentExamKey].title;
+    let score = 0;
+    let cardsHtml = "";
+
+    activeQuestions.forEach((q, index) => {
+
+        const correctArray = q.correct.split(",").map(x => x.trim().toLowerCase());
+        let userArray = userAnswers[index];
+
+        if (!Array.isArray(userArray)) {
+            userArray = userArray ? [userArray] : [];
         }
-        function exitToMenu() { location.reload(); }
-    </script>
+        userArray = userArray.map(x => x.toLowerCase());
+
+        const isCorrect =
+            userArray.length === correctArray.length &&
+            userArray.every(x => correctArray.includes(x));
+
+        if (isCorrect) score++;
+
+        const userAnswerText =
+            userArray.length > 0 ? userArray.map(x => x.toUpperCase()).join(", ") : "None";
+
+        cardsHtml += `
+            <div style="border:1px solid #ccc;padding:10px;margin-bottom:10px;page-break-inside:avoid;">
+                <p><b>Question #${q.id}</b> - ${isCorrect ? 'CORRECT' : 'INCORRECT'}</p>
+                ${q.image ? `<img src="${q.image}" style="max-width:200px;">` : ''}
+                <p>Your Answer: ${userAnswerText}</p>
+                <p>Correct: ${q.correct.toUpperCase()}</p>
+            </div>
+        `;
+    });
+
+    const doc = iframe.contentWindow.document;
+    doc.open();
+    doc.write(`
+        <html>
+            <head><title>Report</title></head>
+            <body>
+                <h1>ISTQB Report: ${examTitle}</h1>
+                <p>Score: ${score} / ${activeQuestions.length}</p>
+                ${cardsHtml}
+            </body>
+        </html>
+    `);
+    doc.close();
+
+    iframe.contentWindow.focus();
+    iframe.contentWindow.print();
+
+    setTimeout(() => { document.body.removeChild(iframe); }, 1000);
+}
+
+/* ------------------------- EXIT ------------------------- */
+
+function exitToMenu() {
+    if (timerInterval) clearInterval(timerInterval);
+    document.getElementById("quiz-box").innerHTML = initialMenuHtml;
+}
+
+</script>
+
+	
+	
+	
 </body>
 </html>
