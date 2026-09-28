@@ -671,13 +671,17 @@ function showResults() {
 
     activeQuestions.forEach((q, index) => {
 
-        const correctArray = q.correct.split(",").map(x => x.trim().toLowerCase());
+        // Нормалізація правильних відповідей (підтримка як масиву, так і рядка)
+        const correctArray = Array.isArray(q.correct)
+            ? q.correct.map(x => String(x).trim().toLowerCase())
+            : String(q.correct).split(",").map(x => x.trim().toLowerCase());
+
         let userArray = userAnswers[index];
 
         if (!Array.isArray(userArray)) {
             userArray = userArray ? [userArray] : [];
         }
-        userArray = userArray.map(x => x.toLowerCase());
+        userArray = userArray.map(x => String(x).toLowerCase());
 
         const isCorrect =
             userArray.length === correctArray.length &&
@@ -688,7 +692,7 @@ function showResults() {
         const userAnswerText =
             userArray.length > 0 ? userArray.map(x => x.toUpperCase()).join(", ") : "NO ANSWER";
 
-        const correctAnswerText = q.correct.toUpperCase();
+        const correctAnswerText = correctArray.map(x => x.toUpperCase()).join(", ");
 
         const imageBlock = q.image ? `
             <div style="background:#fff;border:1px solid #e4e6eb;padding:8px;border-radius:6px;margin-bottom:10px;text-align:center;">
@@ -754,13 +758,16 @@ function downloadPDF() {
 
     activeQuestions.forEach((q, index) => {
 
-        const correctArray = q.correct.split(",").map(x => x.trim().toLowerCase());
+        const correctArray = Array.isArray(q.correct)
+            ? q.correct.map(x => String(x).trim().toLowerCase())
+            : String(q.correct).split(",").map(x => x.trim().toLowerCase());
+
         let userArray = userAnswers[index];
 
         if (!Array.isArray(userArray)) {
             userArray = userArray ? [userArray] : [];
         }
-        userArray = userArray.map(x => x.toLowerCase());
+        userArray = userArray.map(x => String(x).toLowerCase());
 
         const isCorrect =
             userArray.length === correctArray.length &&
@@ -771,12 +778,14 @@ function downloadPDF() {
         const userAnswerText =
             userArray.length > 0 ? userArray.map(x => x.toUpperCase()).join(", ") : "None";
 
+        const correctAnswerText = correctArray.map(x => x.toUpperCase()).join(", ");
+
         cardsHtml += `
             <div style="border:1px solid #ccc;padding:10px;margin-bottom:10px;page-break-inside:avoid;">
                 <p><b>Question #${q.id}</b> - ${isCorrect ? 'CORRECT' : 'INCORRECT'}</p>
                 ${q.image ? `<img src="${q.image}" style="max-width:200px;">` : ''}
                 <p>Your Answer: ${userAnswerText}</p>
-                <p>Correct: ${q.correct.toUpperCase()}</p>
+                <p>Correct: ${correctAnswerText}</p>
             </div>
         `;
     });
